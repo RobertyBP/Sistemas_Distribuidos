@@ -1,17 +1,12 @@
 package org.example.senders;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.example.Client_Server.Client.response;
 
 public class Login {
     private final String email;
@@ -48,22 +43,6 @@ public class Login {
             System.out.println(jsonRequest);
             outToServer.println(jsonRequest + "\r\n");
             outToServer.flush();
-
-            // Receber JSON de resposta do servidor
-            BufferedReader inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String serverResponse = response(inFromServer);
-            StringBuilder jsonBuilder = new StringBuilder();
-            jsonBuilder.append(serverResponse);
-            String receivedJson = jsonBuilder.toString();
-            objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(receivedJson);
-            String error = jsonNode.get("error").asText();
-
-            if (error.equals("false")) {
-                JsonNode dataNode = jsonNode.get("data");
-                token = dataNode.get("token").asText();
-            }
-            System.out.println("JSON recebido: " + serverResponse);
 
         } catch (IOException e) {
             System.err.println("Error " + e.getMessage());
