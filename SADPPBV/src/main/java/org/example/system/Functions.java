@@ -15,20 +15,11 @@ public class Functions {
         return DigestUtils.md5Hex(password).toUpperCase();
     }
 
-    public static boolean verificaSenha(String password) {
-        String senhaHash = hash(password);
-        if(password.equals(senhaHash))
+    public static boolean verificaSenha(String password, User logged) {
+        if(logged.getPassword().equals(password))
             return true;
         else
             return false;
-    }
-    public static User compararEmail(String email) {
-        for (User user : allUsers) {
-            if (user.getEmail().equals(email)) {
-                return user;
-            }
-        }
-        return null;
     }
 
     public static boolean isValidEmail(String email) {
@@ -37,7 +28,7 @@ public class Functions {
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
-    public static boolean validate(String email, String password) {
+    public static boolean validate(String email, String password, User logged) {
         // Verificar se o email e a senha são válidos
         if (email == null || password == null) {
             System.out.println("Error. um ou mais campos estão faltando.");
@@ -51,7 +42,7 @@ public class Functions {
             System.out.println("Error. email não está em um formato válido.");
             return false;
         }
-        if (!verificaSenha(password)){
+        if (!verificaSenha(password, logged)){
             System.out.println("Error. senhas não combinam.");
             return false;
         }

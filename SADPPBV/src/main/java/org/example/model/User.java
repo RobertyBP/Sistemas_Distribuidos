@@ -5,18 +5,25 @@ public class User {
     private String name;
     private String email;
     private String password;
-    public User(){};
+    private String token;
+
+    public User() {
+    }
+
+    ;
+
     public User(String name, String email, String password) {
         this.name = name;
         this.email = email;
         this.password = password;
     }
 
-    public User(Boolean isAdmin, String name, String email, String password) {
+    public User(Boolean isAdmin, String name, String email, String password, String token) {
         this.isAdmin = isAdmin;
         this.name = name;
         this.email = email;
         this.password = password;
+        this.token = token;
     }
 
     @Override
@@ -26,9 +33,11 @@ public class User {
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
+                ", token='" + token + '\'' +
                 '}';
     }
 
+    public String getToken() {return token; }
     public String getName() {
         return name;
     }
@@ -41,5 +50,8 @@ public class User {
         return password;
     }
 
-    public boolean getIsAdmin(){return  isAdmin;}
+    public boolean getIsAdmin() {
+        return isAdmin;
+    }
+
 }
