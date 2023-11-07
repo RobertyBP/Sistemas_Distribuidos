@@ -34,9 +34,6 @@ public class Token {
                     .parseClaimsJws(token)
                     .getBody();
 
-            // Verifique se o token contém as informações necessárias ou realiza outras verificações personalizadas
-            String userId = claims.getSubject();
-
             return true;
         } catch (Exception e) {
             return false;

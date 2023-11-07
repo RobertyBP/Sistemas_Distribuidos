@@ -11,10 +11,6 @@ public class Session {
         sessions.put(token, user);
     }
 
-    public static User getSessionUser(String token) {
-        return sessions.get(token);
-    }
-
     public static void removeSession(String token) {
         sessions.remove(token);
     }

@@ -1,16 +1,16 @@
 package org.example;
 
-import org.example.senders.CRUD;
-import org.example.senders.Login;
-import org.example.senders.Logout;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.example.crud.*;
 import org.example.system.Functions;
-import org.example.system.Token;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import static org.example.crud.Response.responseLogin;
 
 public class Client {
     private static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
@@ -34,18 +34,15 @@ public class Client {
                 try {
                     BufferedReader inputServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     String serverResponse = "";
-                    String token = "";
                     boolean escolha = true;
                     while (escolha) {
                         switch (user) {
                             case "1":
                                 user = "admim";
-                                token = Token.gerarToken(i, true);
                                 escolha = false;
                                 break;
                             case "2":
                                 user = "comum";
-                                token = Token.gerarToken(i, true);
                                 escolha = false;
                                 break;
                             default:
@@ -56,79 +53,111 @@ public class Client {
                         }
                     }
                     while (user.equals("admim")) {
-                        System.out.println("1-Cadastrar \n2-Login \n 3-Logout\n 4-auto_Cadastrar\n 5-listar\n0- Finalizar");
-                        int op = Integer.parseInt(input.readLine());
-                        switch (op) {
-                            case 1:
-                                cadastroUsuario(socket, token, user);
-                                response();
+                        loginUsuario(socket);
+                        JsonNode jsonNode = responseLogin(inputServer);
+                        JsonNode dataNode;
+                        dataNode = jsonNode.get("data");
+                        String tokenAdm = "";
+                        String erro = "true";
+                        if (dataNode != null) {
+                            tokenAdm = dataNode.get("token") != null ? dataNode.get("token").asText() : null;
+                            erro = dataNode.get("error") != null ? dataNode.get("error").asText() : null;
 
-                                break;
-                            case 2:
-                                loginUsuario(socket);
-                                response();
+                            if (erro.equals("false")) {
+                                System.out.println("1-Cadastrar \n2-auto_Cadastrar \n3-listar\n4-pesquisar\n5-Editar\n6-Deletar\n7-Logout\n0- Finalizar");
+                                int op = Integer.parseInt(input.readLine());
+                                switch (op) {
+                                    case 1:
+                                        cadastroUsuario(socket, tokenAdm, user);
+                                        Response.response(inputServer);
+                                        break;
+                                    case 2:
+                                        cadastroUsuario(socket, tokenAdm, "comum");
+                                        Response.response(inputServer);
+                                        break;
+                                    case 3:
+                                        listar(socket, tokenAdm);
+                                        Response.response(inputServer);
+                                        break;
+                                    case 4:
+                                        pesquisar(socket, tokenAdm);
+                                        Response.response(inputServer);
+                                        break;
+                                    case 5:
+                                        editarUsuario(tokenAdm, socket, user);
+                                        Response.response(inputServer);
+                                        break;
+                                    case 6:
+                                        deleteUsuario(tokenAdm, socket, user);
+                                        Response.response(inputServer);
+                                        break;
+                                    case 7:
+                                        Logout.logoutRequest(tokenAdm, socket);
+                                        tokenAdm = "";
+                                        user = "0";
+                                        break;
 
+                                    case 0:
+                                        System.out.println("Encerrando");
+                                        run = false;
+                                        break;
+                                    default:
+                                        System.out.println("Tente uma opção válida da próxima vez.");
+                                        break;
+                                }
+                            } else {
                                 break;
-                            case 3:
-                                logoutUsuario(token, socket);
-                                response();
-
-                                user = "0";
-                                break;
-                            case 4:
-                                auto_cadastroUsuario(socket, token, user);
-                                response();
-
-                                break;
-                            case 5:
-                                listarUsuario(token, socket);
-                                response();
-                                break;
-                            case 0:
-                                System.out.println("Encerrando");
-                                run = false;
-                                break;
-                            default:
-                                System.out.println("Tente uma opção válida da próxima vez.");
-                                break;
+                            }
                         }
                     }
+
                     while (user.equals("comum")) {
-                        System.out.println(serverResponse);
-                        System.out.println("1- autocadastro\n 2-Login \n3-Logout\n 4-listar\n0- Finalizar");
-                        int op = Integer.parseInt(input.readLine());
-                        switch (op) {
-                            case 1:
-                                auto_cadastroUsuario(socket, token, user);
-                                response();
+                        loginUsuario(socket);
+                        JsonNode jsonNode = responseLogin(inputServer);
+                        JsonNode dataNode;
+                        dataNode = jsonNode.get("data");
+                        String token = "";
+                        String erro = "";
+                        if (dataNode != null) {
+                            token = dataNode.get("token") != null ? dataNode.get("token").asText() : null;
+                            erro = dataNode.get("error") != null ? dataNode.get("error").asText() : null;
 
-                                break;
-                            case 2:
-                                loginUsuario(socket);
-                                response();
+                            if (erro.equals("false")) {
 
-                                break;
-                            case 3:
-                                logoutUsuario(token, socket);
-                                response();
+                                System.out.println("1-autocadastro\n2-pesquisar\n3-Logout\n0- Finalizar");
 
-                                user = "0";
+                                int op = Integer.parseInt(input.readLine());
+                                switch (op) {
+                                    case 1:
+                                        cadastroUsuario(socket, token, user);
+                                        Response.response(inputServer);
+                                        break;
+                                    case 2:
+                                        pesquisar(socket, token);
+                                        Response.response(inputServer);
+                                        user = "0";
+                                        break;
+                                    case 3:
+                                        Logout.logoutRequest(token, socket);
+                                        user = "0";
+                                        break;
+                                    case 0:
+                                        System.out.println("Encerrando");
+                                        run = false;
+                                        break;
+                                    default:
+                                        System.out.println("Tente uma opção válida da próxima vez.");
+                                        break;
+                                }
+                            } else {
                                 break;
-                            case 4:
-                                listarUsuario(token, socket);
-                                response();
-                                break;
-                            case 0:
-                                System.out.println("Encerrando");
-                                run = false;
-                                break;
-                            default:
-                                System.out.println("Tente uma opção válida da próxima vez.");
-                                break;
+                            }
                         }
                     }
                 } catch (IOException e) {
                     System.err.println("ERROR: " + e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
                 i++;
             }
@@ -143,38 +172,40 @@ public class Client {
             System.exit(1);
         }
     }
-    public static void response() {
-        String line = "";
 
-        String serverResponse = line;
-        System.out.println(serverResponse);
+    public static void pesquisar(Socket socket, String token) throws IOException {
+        Listar.pesquisar(token, socket);
     }
-    public static void auto_cadastroUsuario(Socket socket, String token, String user) throws IOException {
-        System.out.println("\tCadastro ");
-        System.out.println("Nome:");
-        String name = input.readLine();
-        System.out.println("E-mail");
-        String email = input.readLine();
-        System.out.println("Senha:");
-        String password = Functions.hash(input.readLine());
 
-        CRUD crud = new CRUD(name, email, password, socket);
-        crud.auto_Registrar();
+    public static void listar(Socket socket, String token) throws IOException {
+            Listar.listar(socket, token);
 
     }
 
     public static void cadastroUsuario(Socket socket, String token, String user) throws IOException {
-        System.out.println("\tCadastro ");
-        System.out.println("Nome:");
-        String name = input.readLine();
-        System.out.println("E-mail");
-        String email = input.readLine();
-        System.out.println("Senha:");
-        String password = Functions.hash(input.readLine());
+        if (user.equals("admin")) {
+            System.out.println("\tCadastro ");
+            System.out.println("Nome:");
+            String name = input.readLine();
+            System.out.println("E-mail");
+            String email = input.readLine();
+            System.out.println("Senha:");
+            String password = Functions.hash(input.readLine());
 
-        CRUD crud = new CRUD(name, email, password, user, token, socket);
-        crud.registrar();
+            Cadastro crud = new Cadastro(name, email, password, user, token, socket);
+            crud.registrar();
+        } else {
+            System.out.println("\tCadastro ");
+            System.out.println("Nome:");
+            String name = input.readLine();
+            System.out.println("E-mail");
+            String email = input.readLine();
+            System.out.println("Senha:");
+            String password = Functions.hash(input.readLine());
 
+            Cadastro crud = new Cadastro(name, email, password, socket);
+            crud.auto_Registrar();
+        }
     }
 
     public static void loginUsuario(Socket socket) throws IOException {
@@ -194,28 +225,45 @@ public class Client {
         login.loginRequest();
     }
 
-    private static void logoutUsuario(String token, Socket socket) throws IOException {
-        try {
-            System.out.println("\tLogout ");
+    private static void editarUsuario(String token, Socket socket, String user) throws IOException {
+        if (user.equals("admin")) {
+            System.out.println("id:");
+            String id = input.readLine();
+            System.out.println("Nome:");
+            String name = input.readLine();
+            System.out.println("E-mail");
+            String email = input.readLine();
+            System.out.println("Senha:");
+            String password = Functions.hash(input.readLine());
 
-            Logout.logoutRequest(token, socket);
+            Editar.editar(token, name, email, password, user, id, socket);
+        } else {
+            System.out.println("id:");
+            String id = input.readLine();
+            System.out.println("Nome:");
+            String name = input.readLine();
+            System.out.println("E-mail");
+            String email = input.readLine();
+            String password = null;
 
-        } catch (IOException e) {
-            System.err.println("Couldn't get I/O: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            Editar.editarComum(id, name, email, password, socket);
         }
     }
 
-    private static void listarUsuario(String token, Socket socket) throws IOException {
-        try {
-            CRUD.listarRequest(token, socket);
-
-        } catch (IOException e) {
-            System.err.println("Couldn't get I/O: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public static void deleteUsuario(String token, Socket socket, String user) throws IOException {
+        if (user.equals("admin")) {
+            System.out.println("id:");
+            String id = input.readLine();
+            Deletar.deletar(token, id, socket);
+        } else {
+            System.out.println("E-mail");
+            String email = input.readLine();
+            System.out.println("Senha:");
+            String password = Functions.hash(input.readLine());
+            Deletar.deletarComum(token, email, password, socket);
         }
+
     }
+
 
 }
